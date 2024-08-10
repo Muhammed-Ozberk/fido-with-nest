@@ -1,0 +1,76 @@
+/* Ekranın tamamını kapsayan bir kapsayıcı ekliyoruz */
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Yüksekliği ekranın yüksekliğine ayarlıyoruz */
+  margin: 0; /* Varsayılan margin'i kaldırıyoruz */
+}
+
+.register-form {
+  max-width: 500px; /* Kartın genişliğini artırıyoruz */
+  width: 100%; /* Kartın genişliğini ekran genişliğine uyacak şekilde ayarlıyoruz */
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column; /* İçeriklerin dikey olarak hizalanmasını sağlıyoruz */
+  align-items: center; /* İçeriğin yatay olarak ortalanmasını sağlıyoruz */
+}
+
+form {
+  width: 100%; /* Formun genişliğini kartın genişliğine uyacak şekilde ayarlıyoruz */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column; /* İçeriklerin dikey olarak hizalanmasını sağlıyoruz */
+} 
+
+h2 {
+  text-align: center;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 15px;
+  width: 100%; /* Form grubunun genişliğini kartın genişliğine uyacak şekilde ayarlıyoruz */
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  text-align: center; /* Etiketleri ortalıyoruz */
+}
+
+.form-group input {
+  width: calc(100% - 16px); /* Genişliği kartın genişliğine uyacak şekilde ayarlıyoruz */
+  padding: 12px; /* Padding'i artırıyoruz */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 1em; /* Font boyutunu artırıyoruz */
+}
+
+.error {
+  color: red;
+  font-size: 0.875em;
+  margin-top: 5px;
+  text-align: center; /* Hata mesajını ortalıyoruz */
+}
+
+button {
+  width: calc(100% - 16px); /* Butonun genişliğini kartın genişliğine uyacak şekilde ayarlıyoruz */
+  padding: 12px; /* Padding'i artırıyoruz */
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.125em; /* Font boyutunu artırıyoruz */
+}
+
+button:hover {
+  background-color: #0056b3;
+}
