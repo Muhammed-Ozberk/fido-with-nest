@@ -8,24 +8,17 @@ export class FidoController {
 
   @Post('register/:userId/options')
   async generateRegistrationOptions(@Param('userId') userId: string) {
-    const options = await this.fidoService.generateRegistrationOptions(userId);
-    return options;
+    return await this.fidoService.generateRegistrationOptions(userId);
   }
 
   @Post('register/:userId/verify')
   async verifyRegistration(@Param('userId') userId: string, @Body() body: any) {
-    const success = await this.fidoService.verifyRegistrationResponse(
-      userId,
-      body,
-    );
-    return { success };
+    return await this.fidoService.verifyRegistrationResponse(userId, body);
   }
 
   @Post('authenticate/:userId/options')
   async generateAuthenticationOptions(@Param('userId') userId: string) {
-    const options =
-      await this.fidoService.generateAuthenticationOptions(userId);
-    return options;
+    return await this.fidoService.generateAuthenticationOptions(userId);
   }
 
   @Post('authenticate/:userId/verify')
@@ -33,14 +26,6 @@ export class FidoController {
     @Param('userId') userId: string,
     @Body() body: any,
   ) {
-    const data = await this.fidoService.verifyAuthenticationResponse(
-      userId,
-      body,
-    );
-    if (typeof data !== 'boolean') {
-      return { success: false, error: data };
-    } else {
-      return { success: false };
-    }
+    return await this.fidoService.verifyAuthenticationResponse(userId, body);
   }
 }

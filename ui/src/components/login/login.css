@@ -78,3 +78,13 @@ button:hover {
 .fido-switch {
   margin-bottom: 20px;
 }
+
+.register-link {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.register-link:hover {
+    color: darkblue;
+}

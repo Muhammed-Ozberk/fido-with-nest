@@ -15,6 +15,11 @@ import { Passkey } from './schemas/passkey.schema';
 import { UsersService } from '../users/users.service';
 import { UserDocument } from 'src/users/schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
+import {
+  errorResponse,
+  successResponse,
+} from 'src/common/utils/response.function';
+import { ResponseDto } from 'src/common/dtos/response.dto';
 
 @Injectable()
 export class FidoService {
@@ -43,55 +48,65 @@ export class FidoService {
 
   async generateRegistrationOptions(
     userId: string,
-  ): Promise<PublicKeyCredentialCreationOptionsJSON> {
-    const user = await this.usersService.findUserById(userId);
-    if (!user) {
-      throw new Error(`User with id ${userId} not found`);
+  ): Promise<ResponseDto<PublicKeyCredentialCreationOptionsJSON>> {
+    try {
+      const user = await this.usersService.findUserById(userId);
+      if (!user) {
+        return errorResponse('User not found', 'User not found', 404);
+      }
+
+      const userPasskeys = await this.passkeyModel.find({ user: user._id });
+
+      const options = await generateRegistrationOptions({
+        rpName: this.rpName,
+        rpID: this.rpID,
+        userID: this.convertObjectIdToUint8Array(user._id),
+        userName: user.username,
+        attestationType: 'none',
+        excludeCredentials: userPasskeys.map((passkey) => ({
+          id: passkey.credentialID,
+          transports: passkey.transports,
+        })),
+        authenticatorSelection: {
+          residentKey: 'preferred',
+          userVerification: 'preferred',
+        },
+      });
+
+      (user as UserDocument).registrationOptions = options;
+      const savedUser = await (user as UserDocument).save();
+
+      if (!savedUser) {
+        return errorResponse('User not saved', 'User not saved', 500);
+      }
+
+      return successResponse(options, 'Registration options generated');
+    } catch (error) {
+      console.error('Error generating registration options:', error);
+      return errorResponse(
+        'Error generating registration options',
+        'Error generating registration options',
+        500,
+      );
     }
-
-    const userPasskeys = await this.passkeyModel.find({ user: user._id });
-
-    const options = await generateRegistrationOptions({
-      rpName: this.rpName,
-      rpID: this.rpID,
-      userID: this.convertObjectIdToUint8Array(user._id),
-      userName: user.username,
-      attestationType: 'none',
-      excludeCredentials: userPasskeys.map((passkey) => ({
-        id: passkey.webauthnUserID,
-        transports: passkey.transports,
-      })),
-      authenticatorSelection: {
-        residentKey: 'preferred',
-        userVerification: 'preferred',
-        authenticatorAttachment: 'platform',
-      },
-    });
-
-    (user as UserDocument).registrationOptions = options;
-    const savedUser = await (user as UserDocument).save();
-
-    if (!savedUser) {
-      throw new Error('Error saving user registration options');
-    }
-
-    return options;
   }
 
   async verifyRegistrationResponse(
     userId: string,
     response: any,
-  ): Promise<boolean> {
+  ): Promise<ResponseDto<boolean>> {
     const user = await this.usersService.findUserById(userId);
     if (!user) {
-      throw new Error(`User with id ${userId} not found`);
+      return errorResponse('User not found', 'User not found', 404);
     }
-
-    console.log('user:', user);
 
     const currentOptions = user.registrationOptions;
     if (!currentOptions) {
-      throw new Error('No registration options found for user');
+      return errorResponse(
+        'No registration options found for user',
+        'No registration options found for user',
+        500,
+      );
     }
 
     try {
@@ -126,63 +141,80 @@ export class FidoService {
 
         await newPasskey.save();
 
-        return true;
+        return successResponse(true, 'Registration successful');
       }
     } catch (error) {
       console.error('Error verifying registration response:', error);
-      return false;
+      return errorResponse(
+        'Error verifying registration response',
+        'Error verifying registration',
+        500,
+      );
     }
 
-    return false;
+    return errorResponse('Registration failed', 'Registration failed', 500);
   }
 
   async generateAuthenticationOptions(
     username: string,
-  ): Promise<PublicKeyCredentialRequestOptionsJSON> {
-    const user = await this.usersService.findOne(username);
-    if (!user) {
-      throw new Error(`User with id ${username} not found`);
+  ): Promise<ResponseDto<PublicKeyCredentialRequestOptionsJSON>> {
+    try {
+      const user = await this.usersService.findOne(username);
+      if (!user) {
+        return errorResponse('User not found', 'User not found', 404);
+      }
+
+      const userPasskeys = await this.passkeyModel.find({ user: user._id });
+
+      const options = await generateAuthenticationOptions({
+        rpID: this.rpID,
+        allowCredentials: userPasskeys.map((passkey) => ({
+          id: passkey.credentialID,
+          transports: passkey.transports,
+        })),
+        userVerification: 'preferred',
+      });
+
+      (user as UserDocument).authenticationOptions = options;
+      await (user as UserDocument).save();
+
+      return successResponse(options, 'Authentication options generated');
+    } catch (error) {
+      console.error('Error generating authentication options:', error);
+      return errorResponse(
+        'Error generating authentication options',
+        'Error generating authentication options',
+        500,
+      );
     }
-
-    const userPasskeys = await this.passkeyModel.find({ user: user._id });
-
-    const options = await generateAuthenticationOptions({
-      rpID: this.rpID,
-      allowCredentials: userPasskeys.map((passkey) => ({
-        id: passkey.id,
-        transports: passkey.transports,
-      })),
-      userVerification: 'preferred',
-    });
-
-    (user as UserDocument).authenticationOptions = options;
-    await (user as UserDocument).save();
-
-    return options;
   }
 
   async verifyAuthenticationResponse(
-    userId: string,
+    username: string,
     response: any,
-  ): Promise<boolean | { success: boolean; access_token?: string }> {
-    const user = await this.usersService.findUserById(userId);
+  ): Promise<ResponseDto<{ success: boolean; token?: string } | boolean>> {
+    const user = await this.usersService.findOne(username);
     if (!user) {
-      throw new Error(`User with id ${userId} not found`);
+      return errorResponse('User not found', 'User not found', 404);
     }
 
     const currentOptions = user.authenticationOptions;
     if (!currentOptions) {
-      throw new Error('No authentication options found for user');
+      return errorResponse(
+        'No authentication options found for user',
+        'No authentication options found for user',
+        500,
+      );
     }
 
     const userPasskeys = await this.passkeyModel.find({ user: user._id });
 
     const foundPasskey = userPasskeys.find(
-      (passkey) => passkey.id === response.id,
+      (passkey) => passkey.credentialID === response.id,
     );
 
     if (!foundPasskey) {
-      throw new Error('Passkey not found for user');
+      return errorResponse('Passkey not found', 'Passkey not found', 404);
     }
 
     try {
@@ -194,7 +226,7 @@ export class FidoService {
         authenticator: {
           credentialPublicKey: foundPasskey.publicKey,
           counter: foundPasskey.counter,
-          credentialID: foundPasskey.id,
+          credentialID: foundPasskey.credentialID,
           transports: foundPasskey.transports,
         },
       });
@@ -204,16 +236,21 @@ export class FidoService {
       if (verified && authenticationInfo) {
         foundPasskey.set('counter', authenticationInfo.newCounter);
         await foundPasskey.save();
-        return {
-          success: true,
-          access_token: this.jwtService.sign({ sub: user._id }),
-        };
+        const payload = { username: user.username, sub: user._id };
+        return successResponse(
+          { success: true, token: this.jwtService.sign(payload) },
+          'Authentication successful',
+        );
       }
     } catch (error) {
       console.error('Error verifying authentication response:', error);
-      return false;
+      return errorResponse(
+        'Error verifying authentication response',
+        'Error verifying authentication response',
+        500,
+      );
     }
 
-    return false;
+    return errorResponse('Authentication failed', 'Authentication failed', 500);
   }
 }

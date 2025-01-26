@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  fido-nest-app:
+    build:
+      context: .
+    container_name: fido-nest-app
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+    networks:
+      - nest-network
+    depends_on:
+      - fido-mongodb
+       
+  fido-mongodb:
+    image: mongo:7.0
+    container_name: fido-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ../../mongodb_data:/data/db
+    networks:
+      - nest-network
+
+networks:
+  nest-network:
+    driver: bridge

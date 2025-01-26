@@ -1,6 +1,12 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import { errorResponse } from 'src/common/utils/response.function';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -11,7 +17,10 @@ export class JwtAuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      return false;
+      // Token eksikse açıklayıcı bir hata mesajı fırlat
+      throw new UnauthorizedException(
+        errorResponse('Token eksik', 'No token provided', 401),
+      );
     }
 
     try {
@@ -19,7 +28,10 @@ export class JwtAuthGuard implements CanActivate {
       request['user'] = payload;
       return true;
     } catch {
-      return false;
+      // Token geçersizse açıklayıcı bir hata mesajı fırlat
+      throw new UnauthorizedException(
+        errorResponse('Geçersiz token', 'Invalid token', 401),
+      );
     }
   }
 

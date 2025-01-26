@@ -28,6 +28,7 @@
     "@simplewebauthn/server": "^10.0.1",
     "@simplewebauthn/typescript-types": "^8.3.4",
     "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
     "mongoose": "^8.5.2",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"

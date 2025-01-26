@@ -48,7 +48,7 @@ const Register = () => {
     });
 
     return (
-        
+
         // Register Container
         <div className="register-container">
             <div className="register-form">

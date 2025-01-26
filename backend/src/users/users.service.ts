@@ -5,6 +5,11 @@ import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserProfile } from './dto/user-profile.dto';
 import * as bcrypt from 'bcrypt';
+import {
+  errorResponse,
+  successResponse,
+} from 'src/common/utils/response.function';
+import { ResponseDto } from 'src/common/dtos/response.dto';
 
 @Injectable()
 export class UsersService {
@@ -31,14 +36,18 @@ export class UsersService {
     return null;
   }
 
-  async getProfile(username: string): Promise<UserProfile | undefined> {
+  async getProfile(username: string): Promise<ResponseDto<UserProfile>> {
     const user = await this.findOne(username);
-    const userCopy: UserProfile = {
-      _id: user._id,
-      username: user.username,
-      name: user.name,
-    };
-    return userCopy;
+    if (user) {
+      const userCopy: UserProfile = {
+        _id: user._id,
+        username: user.username,
+        name: user.name,
+      };
+      return successResponse(userCopy, 'User profile retrieved successfully');
+    } else {
+      return errorResponse('User not found', 'User not found', 404);
+    }
   }
 
   async findUserById(id: string): Promise<User | null> {

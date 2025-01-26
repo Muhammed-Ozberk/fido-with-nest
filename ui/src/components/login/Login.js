@@ -32,13 +32,14 @@ const Login = () => {
                     },
                     body: JSON.stringify(values),
                 });
+                console.log("response login", response);
 
                 if (!response.ok) {
                     throw new Error("Giriş başarısız, lütfen tekrar deneyin");
                 }
 
                 const data = await response.json();
-                localStorage.setItem("access_token", data.access_token);
+                localStorage.setItem("token", data.data.token);
                 navigate("/");
             } catch (error) {
                 alert("Giriş başarısız: " + error.message);
@@ -65,10 +66,8 @@ const Login = () => {
 
             const options = await response.json();
 
-            console.log("options", options);
-
             // Tarayıcı ile kimlik doğrulamasını başlat
-            const asseResp = await startAuthentication(options);
+            const asseResp = await startAuthentication(options.data);
 
             // Sunucuya doğrulama yanıtını gönderin
             const verificationResp = await fetch(`http://localhost:8080/fido/authenticate/${formik.values.username}/verify`, {
@@ -81,10 +80,8 @@ const Login = () => {
 
             const verificationJSON = await verificationResp.json();
 
-            console.log("verificationJSON", verificationJSON);
-
-            if (verificationJSON.success) {
-                localStorage.setItem("access_token", verificationJSON.access_token);
+            if (verificationJSON.data.success) {
+                localStorage.setItem("token", verificationJSON.data.token);
                 navigate("/");
             } else {
                 setFidoError("Kimlik doğrulama başarısız oldu.");
@@ -163,6 +160,9 @@ const Login = () => {
                         <button type="submit">Giriş Yap</button>
                     </form>
                 )}
+                <div className="register-redirect">
+                    <p>Hesabınız yok mu? <span className="register-link" onClick={() => navigate("/register")}>Kayıt Ol</span></p>
+                </div>
             </div>
         </div>
     );

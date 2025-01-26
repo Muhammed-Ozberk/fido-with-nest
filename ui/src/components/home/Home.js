@@ -14,7 +14,7 @@ const Home = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const token = localStorage.getItem("access_token");
+                const token = localStorage.getItem("token");
                 const response = await fetch("http://localhost:8080/users/profile", {
                     method: "GET",
                     headers: {
@@ -28,8 +28,8 @@ const Home = () => {
                 }
 
                 const data = await response.json();
-                setUserId(data._id);
-                setUsername(data.name);
+                setUserId(data.data._id);
+                setUsername(data.data.name);
             } catch (error) {
                 console.error("Kullanıcı bilgileri alınamadı: ", error);
                 setUsername("Misafir");
@@ -64,7 +64,7 @@ const Home = () => {
             const options = await response.json();
 
             // Tarayıcı ile kaydı başlat
-            const attResp = await startRegistration(options);
+            const attResp = await startRegistration(options.data);
 
             // Sunucuya kayıt yanıtını gönderin
             const verificationResp = await fetch(`http://localhost:8080/fido/register/${userId}/verify`, {
@@ -75,11 +75,10 @@ const Home = () => {
                 body: JSON.stringify(attResp),
             });
 
-            console.log(verificationResp);
 
             const verificationJSON = await verificationResp.json();
 
-            if (verificationJSON.succes) {
+            if (verificationJSON.statusCode === 200) {
                 setFidoSuccess("Kayıt başarılı!");
             } else {
                 setFidoError("Kayıt başarısız oldu.");
